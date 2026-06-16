@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Diagnóstico de Coherencia — DavoTrainer</title>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', sans-serif; background: #0a0a0a; color: #f0ede8; min-height: 100vh; }
+  .screen { display: none; }
+  .screen.active { display: block; }
+  .wrap { max-width: 480px; margin: 0 auto; padding: 2.5rem 1.5rem 4rem; min-height: 100vh; }
+  .logo { font-size: 11px; letter-spacing: 0.15em; color: #8a7f72; text-transform: uppercase; margin-bottom: 3rem; }
+  h1 { font-size: 26px; font-weight: 500; line-height: 1.3; color: #f0ede8; margin-bottom: 1rem; }
+  h2 { font-size: 20px; font-weight: 500; line-height: 1.4; color: #f0ede8; margin-bottom: 0.75rem; }
+  .subtitle { font-size: 15px; color: #8a7f72; line-height: 1.7; margin-bottom: 2rem; }
+  .accent { color: #c8a96e; }
+  .divider { width: 40px; height: 1px; background: #c8a96e; margin: 1.5rem 0; }
+  .btn { display: block; width: 100%; padding: 1rem 1.5rem; background: #c8a96e; color: #0a0a0a; border: none; border-radius: 4px; font-size: 15px; font-weight: 500; font-family: 'Inter', sans-serif; cursor: pointer; text-align: center; transition: opacity 0.2s; letter-spacing: 0.02em; }
+  .btn:hover { opacity: 0.88; }
+  .btn:active { transform: scale(0.99); }
+  .btn-whatsapp { background: transparent; color: #4db563; border: 1px solid #4db56333; margin-top: 0.75rem; }
+  .btn-whatsapp:hover { background: #4db56311; }
+  label { display: block; font-size: 13px; color: #8a7f72; margin-bottom: 0.4rem; letter-spacing: 0.04em; }
+  input[type="text"], input[type="tel"], input[type="email"], textarea { width: 100%; background: #141414; border: 1px solid #2a2a2a; border-radius: 4px; padding: 0.85rem 1rem; color: #f0ede8; font-family: 'Inter', sans-serif; font-size: 15px; margin-bottom: 1.25rem; transition: border-color 0.2s; -webkit-appearance: none; }
+  input:focus, textarea:focus { outline: none; border-color: #c8a96e55; }
+  textarea { resize: vertical; min-height: 90px; }
+  .progress-wrap { margin-bottom: 2rem; }
+  .progress-label { display: flex; justify-content: space-between; font-size: 12px; color: #8a7f72; margin-bottom: 0.5rem; }
+  .progress-bar { height: 2px; background: #1e1e1e; border-radius: 2px; overflow: hidden; }
+  .progress-fill { height: 100%; background: #c8a96e; border-radius: 2px; transition: width 0.4s ease; }
+  .q-num { font-size: 11px; letter-spacing: 0.12em; color: #c8a96e; text-transform: uppercase; margin-bottom: 0.6rem; }
+  .q-text { font-size: 18px; font-weight: 400; line-height: 1.5; color: #f0ede8; margin-bottom: 0.5rem; }
+  .q-hint { font-size: 13px; color: #6a6055; margin-bottom: 1.5rem; line-height: 1.6; }
+  .options { display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 1.5rem; }
+  .option { padding: 0.9rem 1.1rem; border: 1px solid #2a2a2a; border-radius: 4px; cursor: pointer; font-size: 14px; color: #c8c0b5; background: #141414; transition: all 0.15s; line-height: 1.4; }
+  .option:hover { border-color: #c8a96e44; color: #f0ede8; }
+  .option.selected { border-color: #c8a96e; color: #c8a96e; background: #c8a96e0d; }
+  .nav-btns { display: flex; gap: 0.75rem; margin-top: 1rem; }
+  .btn-back { flex: 0 0 auto; padding: 1rem 1.2rem; background: transparent; border: 1px solid #2a2a2a; border-radius: 4px; color: #8a7f72; font-size: 15px; cursor: pointer; font-family: 'Inter', sans-serif; transition: border-color 0.2s; }
+  .btn-back:hover { border-color: #8a7f72; }
+  .btn-next { flex: 1; }
+  .error-msg { font-size: 12px; color: #c87a6e; margin-top: -0.8rem; margin-bottom: 0.8rem; }
+  .result-badge { display: inline-block; padding: 0.35rem 0.9rem; border: 1px solid #c8a96e55; border-radius: 2px; font-size: 11px; letter-spacing: 0.14em; color: #c8a96e; text-transform: uppercase; margin-bottom: 1rem; }
+  .result-title { font-size: 28px; font-weight: 500; color: #f0ede8; margin-bottom: 0.75rem; line-height: 1.2; }
+  .result-desc { font-size: 15px; color: #a09488; line-height: 1.75; margin-bottom: 1.75rem; }
+  .result-block { background: #141414; border: 1px solid #2a2a2a; border-radius: 4px; padding: 1.1rem 1.25rem; margin-bottom: 0.75rem; }
+  .result-block-label { font-size: 11px; letter-spacing: 0.1em; color: #6a6055; text-transform: uppercase; margin-bottom: 0.35rem; }
+  .result-block-text { font-size: 14px; color: #c8c0b5; line-height: 1.6; }
+  .score-bar-wrap { margin: 1.5rem 0; }
+  .score-bar-label { display: flex; justify-content: space-between; font-size: 12px; color: #6a6055; margin-bottom: 0.4rem; }
+  .score-bar { height: 3px; background: #1e1e1e; border-radius: 2px; overflow: hidden; }
+  .score-bar-fill { height: 100%; background: #c8a96e; border-radius: 2px; }
+  .cta-section { margin-top: 2rem; padding-top: 2rem; border-top: 1px solid #1e1e1e; }
+  .cta-title { font-size: 17px; font-weight: 500; color: #f0ede8; margin-bottom: 0.5rem; }
+  .cta-sub { font-size: 14px; color: #6a6055; margin-bottom: 1.5rem; line-height: 1.6; }
+  .sent-msg { display: none; font-size: 13px; color: #8a7f72; text-align: center; margin-top: 1rem; }
+</style>
+</head>
+<body>
+
+<!-- PANTALLA 0: INICIO -->
+<div class="screen active" id="screen-inicio">
+  <div class="wrap">
+    <div class="logo">DavoTrainer · Sistema Coherencia</div>
+    <h1>¿Estás actuando en línea con lo que realmente eres?</h1>
+    <div class="divider"></div>
+    <p class="subtitle">Este diagnóstico breve te ayudará a descubrir tu nivel actual de coherencia personal — la distancia entre lo que piensas, lo que sientes y lo que haces.</p>
+    <p class="subtitle" style="margin-bottom:2.5rem;">No es un test de fitness. No mide disciplina. Mide algo más profundo: <span class="accent">hasta qué punto te estás traicionando a ti mismo.</span></p>
+    <p style="font-size:13px; color:#6a6055; margin-bottom:2rem;">⏱ Tiempo estimado: 4 minutos · 10 preguntas</p>
+    <button class="btn" onclick="goTo('screen-datos')">Comenzar el diagnóstico</button>
+  </div>
+</div>
+
+<!-- PANTALLA 1: DATOS -->
+<div class="screen" id="screen-datos">
+  <div class="wrap">
+    <div class="logo">DavoTrainer · Sistema Coherencia</div>
+    <h2>Antes de empezar</h2>
+    <p class="subtitle">Necesito saber a quién voy a diagnosticar.</p>
+    <label>Nombre</label>
+    <input type="text" id="inp-nombre" placeholder="Tu nombre">
+    <div class="error-msg" id="err-nombre" style="display:none">Por favor, introduce tu nombre.</div>
+    <label>Correo electrónico</label>
+    <input type="email" id="inp-email" placeholder="tu@email.com">
+    <div class="error-msg" id="err-email" style="display:none">Por favor, introduce tu correo.</div>
+    <label>Teléfono</label>
+    <input type="tel" id="inp-telefono" placeholder="+34 600 000 000">
+    <div class="error-msg" id="err-telefono" style="display:none">Por favor, introduce tu número de teléfono.</div>
+    <button class="btn" onclick="validarDatos()">Continuar</button>
+  </div>
+</div>
+
+<!-- PANTALLA 2: PREGUNTAS -->
+<div class="screen" id="screen-preguntas">
+  <div class="wrap" id="q-wrap"></div>
+</div>
+
+<!-- PANTALLA 3: RESULTADO -->
+<div class="screen" id="screen-resultado">
+  <div class="wrap" id="result-wrap"></div>
+</div>
+
+<script>
+(function(){ emailjs.init('NpkEtUkEh1WMw_AgM'); })();
+
+const preguntas = [
+  { tipo:'opciones', texto:'¿Con qué frecuencia terminas el día sintiéndote satisfecho de cómo lo viviste?', hint:'No hablo de productividad. Hablo de esa sensación de haber sido fiel a ti mismo.', opciones:[{texto:'Casi nunca. Siento que el día me pasa por encima.',peso:0},{texto:'A veces, cuando las cosas salen según lo planeado.',peso:1},{texto:'La mayoría de los días tengo al menos un momento así.',peso:2},{texto:'Con frecuencia. Tengo bastante claridad sobre lo que quiero.',peso:3}] },
+  { tipo:'opciones', texto:'¿Cómo describirías la relación con tu cuerpo en este momento?', hint:'No me refiero solo a si haces ejercicio. Me refiero a cómo lo tratas, cómo lo escuchas.', opciones:[{texto:'Lo ignoro bastante. Funciona, pero no le presto atención.',peso:0},{texto:'Hay una tensión. Sé que debería cuidarlo más.',peso:1},{texto:'Tenemos una relación decente, aunque con altibajos.',peso:2},{texto:'Lo cuido y escucho. Es parte de quien soy.',peso:3}] },
+  { tipo:'abierta', texto:'¿Qué es lo que más te cuesta mantener de forma consistente en tu vida?', hint:'Puede ser un hábito, una relación, un compromiso contigo mismo... lo que sea.', placeholder:'Escríbelo con tus propias palabras...' },
+  { tipo:'opciones', texto:'Cuando te propones cambiar algo en ti mismo, ¿qué suele ocurrir?', hint:'', opciones:[{texto:'Empiezo con fuerza y luego lo abandono. Siempre.',peso:0},{texto:'A veces lo consigo, pero necesito circunstancias perfectas.',peso:1},{texto:'Avanzo, aunque no siempre en línea recta.',peso:2},{texto:'Cuando me comprometo de verdad, lo mantengo.',peso:3}] },
+  { tipo:'opciones', texto:'¿Cuánto confías hoy en tu propia palabra?', hint:'Me refiero a lo que te dices a ti mismo: "voy a hacer esto", "voy a cambiar aquello".', opciones:[{texto:'Muy poco. Sé que probablemente no lo voy a cumplir.',peso:0},{texto:'Depende. En algunas áreas sí, en otras soy inconsistente.',peso:1},{texto:'Bastante. Me cuesta, pero suelo cumplir lo que me propongo.',peso:2},{texto:'Mucho. Mi relación conmigo mismo es sólida.',peso:3}] },
+  { tipo:'abierta', texto:'Si tuvieras que describir la brecha entre quien eres hoy y quien quieres ser, ¿cómo la describirías?', hint:'No hay respuesta correcta. Escríbelo como te salga.', placeholder:'Descríbelo con tus propias palabras...' },
+  { tipo:'opciones', texto:'¿Tienes claro cuáles son tus valores más importantes?', hint:'No como concepto abstracto, sino en el día a día: sé qué es lo que no estoy dispuesto a sacrificar.', opciones:[{texto:'No especialmente. Actúo por inercia o por lo que se espera de mí.',peso:0},{texto:'Tengo una idea general, pero no la tengo muy definida.',peso:1},{texto:'Sí, aunque no siempre actúo en consecuencia.',peso:2},{texto:'Sí, y son el criterio con el que tomo mis decisiones.',peso:3}] },
+  { tipo:'opciones', texto:'¿Con qué frecuencia haces cosas que sabes que no quieres hacer, pero las haces de todas formas?', hint:'Aceptar compromisos que no quieres, aplazar lo importante, evitar conversaciones necesarias...', opciones:[{texto:'Constantemente. Es uno de mis patrones más repetidos.',peso:0},{texto:'Con bastante frecuencia, sobre todo en ciertas áreas.',peso:1},{texto:'Ocurre, pero cada vez menos.',peso:2},{texto:'Raramente. He aprendido a respetar mis propios límites.',peso:3}] },
+  { tipo:'abierta', texto:'¿Qué te trajo a hacer este diagnóstico hoy?', hint:'Cuéntame con honestidad. ¿Qué estás sintiendo que no está bien?', placeholder:'Sé honesto. Esta respuesta es solo para mí...' },
+  { tipo:'opciones', texto:'¿Cuál es tu nivel de urgencia para cambiar algo en este momento?', hint:'', opciones:[{texto:'Bajo. Estoy explorando, no tengo prisa real.',peso:0},{texto:'Medio. Sé que algo tiene que cambiar, pero lo voy postergando.',peso:1},{texto:'Alto. Estoy en un punto en el que ya no puedo seguir igual.',peso:2},{texto:'Muy alto. Necesito dar un paso concreto ahora.',peso:3}] }
+];
+
+const perfiles = [
+  { rango:[0,8], badge:'Nivel 1', titulo:'Desconectado', desc:'Hay una distancia importante entre quien dices ser y cómo vives. No es falta de inteligencia ni de intención: es que el hilo que debería unir tus valores, tus acciones y tu identidad se ha ido cortando poco a poco. El resultado es esa sensación de vivir en piloto automático, de empezar y no terminar, de prometerte cosas que nunca se cumplen.', bloqueo:'El principal obstáculo no es externo. Es que todavía no existe una base de confianza sólida contigo mismo. Cada compromiso incumplido ha debilitado esa base.', oportunidad:'Cuando alguien parte de cero, el primer paso honesto tiene un impacto enorme. No hace falta hacer mucho. Hace falta hacer lo correcto.', siguiente:'Lo primero es recuperar la confianza en tu propia palabra. Eso se hace con acciones pequeñas y consistentes, no con grandes cambios de golpe.' },
+  { rango:[9,14], badge:'Nivel 2', titulo:'En búsqueda', desc:'Hay consciencia. Eso es más de lo que tiene la mayoría. Sabes que algo no encaja, has consumido contenido, has intentado cambiar. El problema es que buscas la respuesta fuera cuando la incoherencia es interna. El conocimiento sin integración solo aumenta la frustración.', bloqueo:'La trampa es creer que falta información o la técnica correcta. En realidad, falta alineación entre lo que sabes y lo que haces.', oportunidad:'Toda esa búsqueda tiene valor si se convierte en la base de una transformación real, no teórica.', siguiente:'Necesitas dejar de buscar y empezar a aplicar. No más contenido por ahora: un sistema claro y un acompañamiento que te ayude a integrar lo que ya sabes.' },
+  { rango:[15,20], badge:'Nivel 3', titulo:'Despertando', desc:'Estás en un momento de transición. Ya no te engañas. Hay partes de tu vida que empiezan a alinearse, y otras que todavía no. Lo más importante: ya no toleras seguir igual. Esa incomodidad no es una señal de que algo va mal. Es señal de que estás listo para algo diferente.', bloqueo:'La inconsistencia entre áreas. Avanzas en una y retrocedes en otra. Falta una estructura que lo una todo.', oportunidad:'El momento de mayor palanca está justo aquí: cuando ya hay consciencia y también hay urgencia.', siguiente:'No necesitas más motivación. Necesitas un método y estructura para convertir ese despertar en un cambio real y sostenido.' },
+  { rango:[21,26], badge:'Nivel 4', titulo:'Alineándote', desc:'Tienes una base sólida. Tus valores están claros, confías en ti mismo en la mayoría de las áreas y has demostrado que puedes mantener compromisos. Hay coherencia creciente. Lo que queda es profundizar y refinar: identificar los últimos puntos ciegos y construir la versión más completa de lo que quieres ser.', bloqueo:'Los patrones más sutiles: los compromisos a medias, las áreas que todavía evitas, las conversaciones que pospones.', oportunidad:'Estás a poca distancia de operar desde un lugar de coherencia plena. El trabajo ahora es de precisión, no de reconstrucción.', siguiente:'Una revisión profunda de los puntos de fricción que quedan puede acelerar mucho lo que viene. Un proceso de acompañamiento puede hacer ese trabajo más rápido y con más claridad.' },
+  { rango:[27,30], badge:'Nivel 5', titulo:'Coherente', desc:'Vives de forma bastante alineada. Hay coherencia entre lo que piensas, lo que sientes y lo que haces. Eso es raro y valioso. Pero incluso aquí hay una pregunta importante: ¿estás expandiendo esa coherencia, o simplemente manteniéndola?', bloqueo:'El complacimiento. La zona de confort cuando todo "funciona bien" pero ya no hay crecimiento.', oportunidad:'Llevar esa coherencia a su máxima expresión: el servicio, el propósito, la versión más ambiciosa de lo que puedes construir.', siguiente:'Si sientes que hay algo más, que hay una versión más completa de ti mismo a la que todavía no has llegado, merece la pena explorarlo juntos.' }
+];
+
+let qActual=0, respuestas=[], scoreTotal=0, nombre='', telefono='', emailLead='';
+
+function goTo(id) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+function validarDatos() {
+  nombre = document.getElementById('inp-nombre').value.trim();
+  emailLead = document.getElementById('inp-email').value.trim();
+  telefono = document.getElementById('inp-telefono').value.trim();
+  let ok = true;
+  ['err-nombre','err-email','err-telefono'].forEach(id=>document.getElementById(id).style.display='none');
+  if (!nombre) { document.getElementById('err-nombre').style.display='block'; ok=false; }
+  if (!emailLead) { document.getElementById('err-email').style.display='block'; ok=false; }
+  if (!telefono) { document.getElementById('err-telefono').style.display='block'; ok=false; }
+  if (ok) { respuestas=new Array(preguntas.length).fill(null); qActual=0; renderPregunta(); goTo('screen-preguntas'); }
+}
+
+function renderPregunta() {
+  const q = preguntas[qActual];
+  const pct = Math.round((qActual/preguntas.length)*100);
+  const wrap = document.getElementById('q-wrap');
+  let html = `
+    <div class="logo">DavoTrainer · Sistema Coherencia</div>
+    <div class="progress-wrap">
+      <div class="progress-label"><span>Pregunta ${qActual+1} de ${preguntas.length}</span><span>${pct}%</span></div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+    </div>
+    <div class="q-num">Pregunta ${qActual+1}</div>
+    <div class="q-text">${q.texto}</div>
+    ${q.hint?`<div class="q-hint">${q.hint}</div>`:''}
+  `;
+  if (q.tipo==='opciones') {
+    html+=`<div class="options">`;
+    q.opciones.forEach((op,i)=>{
+      const sel = respuestas[qActual]&&respuestas[qActual].texto===op.texto?'selected':'';
+      html+=`<div class="option ${sel}" onclick="seleccionarOpcion(${i})">${op.texto}</div>`;
+    });
+    html+=`</div>`;
+  } else {
+    const val = respuestas[qActual]?respuestas[qActual].texto:'';
+    html+=`<textarea id="resp-abierta" placeholder="${q.placeholder}" style="margin-bottom:1.5rem">${val}</textarea>`;
+  }
+  html+=`
+    <div id="err-q" class="error-msg" style="display:none">Por favor, responde antes de continuar.</div>
+    <div class="nav-btns">
+      ${qActual>0?`<button class="btn-back" onclick="anterior()">←</button>`:''}
+      <button class="btn btn-next" onclick="siguiente()">${qActual<preguntas.length-1?'Siguiente':'Ver mi diagnóstico'}</button>
+    </div>
+  `;
+  wrap.innerHTML = html;
+}
+
+function seleccionarOpcion(i) {
+  const q = preguntas[qActual];
+  respuestas[qActual]={tipo:'opcion',texto:q.opciones[i].texto,peso:q.opciones[i].peso};
+  document.querySelectorAll('.option').forEach((el,idx)=>el.classList.toggle('selected',idx===i));
+}
+
+function siguiente() {
+  const q = preguntas[qActual];
+  if (q.tipo==='abierta') {
+    const val=document.getElementById('resp-abierta').value.trim();
+    if (!val){document.getElementById('err-q').style.display='block';return;}
+    respuestas[qActual]={tipo:'abierta',texto:val,peso:0};
+  } else {
+    if (!respuestas[qActual]){document.getElementById('err-q').style.display='block';return;}
+  }
+  if (qActual<preguntas.length-1){qActual++;renderPregunta();goTo('screen-preguntas');}
+  else calcularResultado();
+}
+
+function anterior(){if(qActual>0){qActual--;renderPregunta();goTo('screen-preguntas');}}
+
+function calcularResultado() {
+  scoreTotal=respuestas.reduce((acc,r)=>acc+(r?r.peso:0),0);
+  const perfil=perfiles.find(p=>scoreTotal>=p.rango[0]&&scoreTotal<=p.rango[1]);
+  const pct=Math.round((scoreTotal/30)*100);
+  const resAbiertas=respuestas.map((r,i)=>r&&r.tipo==='abierta'?`P${i+1}: ${r.texto}`:null).filter(Boolean).join('\n');
+  const urgencia=respuestas[9]?respuestas[9].peso:0;
+  const confianza=respuestas[4]?respuestas[4].peso:0;
+  const señalesCompra=urgencia>=2?'🔴 URGENCIA ALTA':urgencia===1?'🟡 URGENCIA MEDIA':'⚪ URGENCIA BAJA';
+  const señalesDolor=confianza===0?'🔴 Confianza muy baja en sí mismo':confianza===1?'🟡 Confianza inconsistente':'🟢 Confianza moderada';
+
+  document.getElementById('result-wrap').innerHTML=`
+    <div class="logo">DavoTrainer · Sistema Coherencia</div>
+    <div class="result-badge">${perfil.badge} · ${pct}% de coherencia</div>
+    <div class="result-title">${nombre}, estás en el nivel <span class="accent">${perfil.titulo}</span></div>
+    <div class="result-desc">${perfil.desc}</div>
+    <div class="score-bar-wrap">
+      <div class="score-bar-label"><span>Coherencia actual</span><span>${pct}%</span></div>
+      <div class="score-bar"><div class="score-bar-fill" style="width:${pct}%"></div></div>
+    </div>
+    <div class="result-block"><div class="result-block-label">Principal bloqueo</div><div class="result-block-text">${perfil.bloqueo}</div></div>
+    <div class="result-block"><div class="result-block-label">Principal oportunidad</div><div class="result-block-text">${perfil.oportunidad}</div></div>
+    <div class="result-block"><div class="result-block-label">Siguiente paso recomendado</div><div class="result-block-text">${perfil.siguiente}</div></div>
+    <div class="cta-section">
+      <div class="cta-title">Sesión de Diagnóstico de Coherencia</div>
+      <div class="cta-sub">Una conversación de 30 minutos donde analizo contigo los resultados y te digo exactamente qué está frenando tu alineación. Sin venta. Solo claridad.</div>
+      <a href="https://calendly.com/davotrainer-oficial/30min" target="_blank" style="text-decoration:none">
+        <button class="btn">Reservar mi sesión gratuita</button>
+      </a>
+      <a href="https://wa.me/34664569367?text=Hola%20David%2C%20acabo%20de%20hacer%20el%20diagn%C3%B3stico%20de%20coherencia.%20Mi%20nivel%20es%20${encodeURIComponent(perfil.titulo)}%20y%20me%20gustar%C3%ADa%20saber%20m%C3%A1s%20sobre%20el%20programa." target="_blank" style="text-decoration:none">
+        <button class="btn btn-whatsapp">Escribir por WhatsApp</button>
+      </a>
+      <p class="sent-msg" id="sent-ok">✓ Tus respuestas han sido enviadas correctamente.</p>
+    </div>
+  `;
+
+  goTo('screen-resultado');
+
+  const cuerpo=`
+NUEVO DIAGNÓSTICO — SISTEMA COHERENCIA
+========================================
+Nombre: ${nombre}
+Email: ${emailLead}
+Teléfono: ${telefono}
+Perfil: ${perfil.titulo} (${perfil.badge})
+Puntuación: ${scoreTotal}/30 (${pct}% coherencia)
+
+SEÑALES CLAVE
+${señalesCompra}
+${señalesDolor}
+
+RESPUESTAS ABIERTAS
+${resAbiertas}
+
+RESPUESTAS COMPLETAS
+${respuestas.map((r,i)=>`P${i+1}: ${r?r.texto:'—'}`).join('\n')}
+  `.trim();
+
+  emailjs.send('service_9g721xl','template_lwvh0ea',{
+    to_email:'davotrainer.oficial@gmail.com',
+    subject:`[Diagnóstico] ${nombre} — ${perfil.titulo} (${pct}%)`,
+    message: cuerpo,
+    nombre, telefono, email: emailLead,
+    perfil: perfil.titulo,
+    puntuacion:`${scoreTotal}/30`,
+    urgencia: señalesCompra,
+    respuestas_abiertas: resAbiertas
+  }).then(()=>{
+    const el=document.getElementById('sent-ok');
+    if(el) el.style.display='block';
+  }).catch(()=>{});
+}
+</script>
+</body>
+</html>
